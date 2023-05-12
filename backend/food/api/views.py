@@ -1,7 +1,14 @@
 # from django.shortcuts import get_object_or_404
 # # from django_filters.rest_framework import DjangoFilterBackend
-# from rest_framework import filters, viewsets
+from rest_framework import filters, viewsets, permissions, pagination
+
 # from rest_framework.permissions import IsAuthenticatedOrReadOnly
+
+from .serializers import (
+    RecipeSerializer,
+    TagSerializer,
+)
+from recipe.models import Recipe, Tag
 
 # from reviews.models import Category, Genre, Review, Title
 # from .custom_viewsets import (
@@ -18,6 +25,20 @@
 #     TitlePostSerializer,
 #     TitleSerializer,
 # )
+
+
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    pagination_class = None
+
+
+class RecipeViewSet(viewsets.ModelViewSet):
+    http_method_names = ('get', 'post', 'patch', 'delete')
+    queryset = Recipe.objects.all()
+    pagination_class = pagination.LimitOffsetPagination
+    serializer_class = RecipeSerializer
+
 
 # class CategoryViewSet(CreateReadDeleteModelViewSet):
 #     queryset = Category.objects.all()

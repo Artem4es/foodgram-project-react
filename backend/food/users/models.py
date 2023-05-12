@@ -1,5 +1,4 @@
 from django.contrib.auth.models import AbstractUser
-from django.contrib.auth import get_user_model
 from django.db import models
 
 
@@ -11,12 +10,10 @@ from .validators import validate_username
 class User(AbstractUser):
     USER = 'user'
     ADMIN = 'admin'
-    # MODERATOR = 'moderator'
 
     USER_ROLES = [
         (USER, USER),
         (ADMIN, ADMIN),
-        # (MODERATOR, MODERATOR),
     ]
 
     username = models.CharField(
@@ -43,19 +40,6 @@ class User(AbstractUser):
     password = models.CharField(
         max_length=100, blank=False, verbose_name='Пароль'
     )
-    # bio = models.TextField(
-    #     max_length=254, verbose_name='Биография', blank=True
-    # )
-    # role = models.CharField(
-    #     max_length=20,
-    #     choices=USER_ROLES,
-    #     default=USER,
-    #     blank=True,
-    #     verbose_name='Роль',
-    # )
-    # confirmation_code = models.CharField(
-    #     max_length=50, blank=True, verbose_name='Код авторизации'
-    # )
 
     class Meta:
         ordering = ('id',)
@@ -71,13 +55,40 @@ class User(AbstractUser):
     def is_user(self):
         return self.role == self.USER
 
-    # @property
-    # def is_moderator(self):
-    #     return self.role == self.MODERATOR
-
     @property
     def is_admin(self):
         return self.role == self.ADMIN or self.is_superuser or self.is_staff
 
     def __str__(self):
         return self.username
+
+
+class Follow(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Подписчик',
+        related_name='followers',
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор',
+        related_name='authors',
+    )
+
+    pub_date = models.DateTimeField(
+        verbose_name='Дата подписки', auto_now_add=True
+    )
+
+    def __str__(self):
+        return f'{self.user} подписан на {self.author}'
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'], name='unique_subscription'
+            )
+        ]

@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.text import slugify
 
 from users.models import User
 
@@ -52,6 +53,10 @@ class Tag(models.Model):
     color = models.CharField(verbose_name='HEX-код цвета', max_length=7)
     slug = models.SlugField(verbose_name='Слаг')
 
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name, allow_unicode=True)
+        super(Tag, self).save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
@@ -73,20 +78,21 @@ class Recipe(models.Model):
         help_text='Введите название рецепта',
         max_length=255,
     )
-    picture = models.FileField(
+    image = models.FileField(
         verbose_name='Изображние',
-        help_text='Добавьте изображение блюда',  # upload_to=''
+        help_text='Добавьте изображение блюда',
+        upload_to='images',
     )
-    description = models.TextField(
+    text = models.TextField(
         verbose_name='Описание', help_text='Опишите рецепт'
     )
     ingredients = models.ManyToManyField(
         Ingredient, through='RecipeIngredient', verbose_name='Ингредиенты'
     )
-    tag = models.ManyToManyField(
+    tags = models.ManyToManyField(
         Tag, through='RecipeTag', verbose_name='Тег рецепта'
     )
-    time = models.IntegerField(
+    cooking_time = models.IntegerField(
         verbose_name='Время приготовления',
         help_text='Введите время приготовления в минутах',
     )
@@ -98,6 +104,11 @@ class Recipe(models.Model):
         return self.name
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author', 'name'], name='unique_recipe'
+            )
+        ]
         ordering = ('-pub_date',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
@@ -125,3 +136,44 @@ class RecipeIngredient(models.Model):
 
     def __str__(self):
         return f'Для {self.recipe} нужны: {self.ingredient}'
+
+
+class Favorites(models.Model):  # here to avoid circular import
+    """Liked recipes"""
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='recipes'
+    )
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE, related_name='users'
+    )
+    pub_date = models.DateTimeField(
+        verbose_name='Дата добавления в избранное', auto_now_add=True
+    )
+
+    def __str__(self):
+        return f'{self.user} нравится {self.recipe}'
+
+    class Meta:
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранные'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'], name='unique_favorite'
+            )
+        ]
+
+
+class Cart(Favorites):  # here to avoid circular import
+    """Recipes to buy"""
+
+    buy_date = models.DateTimeField(
+        verbose_name='Дата добавления в покупки', auto_now_add=True
+    )
+
+    def __str__(self):
+        return f'{self.user} покупает {self.recipe}'
+
+    class Meta:
+        verbose_name = 'Покупка'
+        verbose_name_plural = 'Покупки'

@@ -5,6 +5,7 @@ from rest_framework.routers import DefaultRouter
 
 app_name = 'api'
 
+from .views import RecipeViewSet, TagViewSet
 
 # from .views import (
 #     CategoryViewSet,
@@ -18,7 +19,8 @@ app_name = 'api'
 
 router = DefaultRouter()
 # router.register(r'users', UsersViewSet, basename='users')
-# router.register(r'categories', CategoryViewSet)
+router.register(r'tags', TagViewSet)
+router.register(r'recipes', RecipeViewSet)
 # router.register(r'genres', GenreViewSet)
 # router.register(r'titles', TitleViewSet)
 # router.register(
@@ -37,7 +39,7 @@ router = DefaultRouter()
 # api/auth/token/login/
 urlpatterns = [
     # path('auth/', include(auth_patterns)),
-    # path('', include(router.urls)),
+    path('', include(router.urls)),
     # Djoser создаст набор необходимых эндпоинтов.
     # базовые, для управления пользователями в Django:
     path('', include('djoser.urls')),  # внутри обрабатывает users/

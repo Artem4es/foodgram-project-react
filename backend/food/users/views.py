@@ -10,8 +10,8 @@
 
 # from api.permissions import IsAdmin, IsSuperUser
 # from .models import User
-from djoser.views import UserViewSet
-from .serializers import UserSerializer, UserSignUpSerializer
+# from djoser.views import UserViewSet
+# from .serializers import UserSerializer, UserSignUpSerializer
 
 
 # # class SignUpView(views.APIView):  # регистрация
