@@ -5,10 +5,12 @@ from rest_framework import filters, viewsets, permissions, pagination
 # from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from .serializers import (
+    IngredientSerializer,
     RecipeSerializer,
     TagSerializer,
 )
-from recipe.models import Recipe, Tag
+from recipe.models import Ingredient, Recipe, Tag
+
 
 # from reviews.models import Category, Genre, Review, Title
 # from .custom_viewsets import (
@@ -25,6 +27,10 @@ from recipe.models import Recipe, Tag
 #     TitlePostSerializer,
 #     TitleSerializer,
 # )
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+    pagination_class = None
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):

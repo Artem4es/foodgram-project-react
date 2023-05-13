@@ -5,7 +5,7 @@ from rest_framework.routers import DefaultRouter
 
 app_name = 'api'
 
-from .views import RecipeViewSet, TagViewSet
+from .views import IngredientViewSet, RecipeViewSet, TagViewSet
 
 # from .views import (
 #     CategoryViewSet,
@@ -21,7 +21,7 @@ router = DefaultRouter()
 # router.register(r'users', UsersViewSet, basename='users')
 router.register(r'tags', TagViewSet)
 router.register(r'recipes', RecipeViewSet)
-# router.register(r'genres', GenreViewSet)
+router.register(r'ingredients', IngredientViewSet)
 # router.register(r'titles', TitleViewSet)
 # router.register(
 #     r'titles/(?P<title_id>\d+)/reviews', ReviewViewSet, basename='reviews'

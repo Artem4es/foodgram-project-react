@@ -35,13 +35,13 @@ class Ingredient(models.Model):
         verbose_name='Продукт',
         max_length=50,
     )
-    qty = models.IntegerField(verbose_name='Количество')
-    units = models.ForeignKey(
+    amount = models.IntegerField(verbose_name='Количество')
+    measurement_unit = models.ForeignKey(
         Unit, verbose_name='Единицы измерения', on_delete=models.CASCADE
     )
 
     def __str__(self):
-        return f'{self.name}, {self.qty}, {self.units}'
+        return f'{self.name}, {self.amount}, {self.measurement_unit}'
 
     class Meta:
         verbose_name = 'Ингредиент'
