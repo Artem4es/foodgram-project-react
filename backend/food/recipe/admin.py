@@ -1,14 +1,27 @@
 from django.contrib import admin
 
+from users.models import Follow
 from recipe.models import (
+    Cart,
     Favorites,
     Unit,
     Product,
     Ingredient,
     Recipe,
     RecipeIngredient,
+    RecipeTag,
     Tag,
 )
+
+
+class CartAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe')
+    search_fields = ('user', 'recipe')
+
+
+class FollowAdmin(admin.ModelAdmin):
+    list_display = ('user', 'author')
+    search_fields = ('user', 'author')
 
 
 class FavoritesAdmin(admin.ModelAdmin):
@@ -17,8 +30,8 @@ class FavoritesAdmin(admin.ModelAdmin):
 
 
 class RecipeIngredientAdmin(admin.ModelAdmin):
-    list_display = ('recipe', 'ingredient')
-    search_fields = ('recipe', 'ingredient')
+    list_display = ('recipe', 'ingredient', 'amount')
+    search_fields = ('recipe', 'ingredient', 'amount')
 
 
 class UnitAdmin(admin.ModelAdmin):
@@ -27,8 +40,8 @@ class UnitAdmin(admin.ModelAdmin):
 
 
 class IngredientAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'amount', 'measurement_unit')
-    search_fields = ('id', 'name', 'amount', 'measurement_unit')
+    list_display = ('id', 'name', 'measurement_unit')
+    search_fields = ('id', 'name', 'measurement_unit')
 
 
 class TagAdmin(admin.ModelAdmin):
@@ -40,6 +53,11 @@ class TagAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
+
+
+class RecipeTagAdmin(admin.ModelAdmin):
+    list_display = ('recipe', 'tag')
+    search_fields = ('recipe', 'tag')
 
 
 class RecipeAdmin(admin.ModelAdmin):
@@ -76,3 +94,6 @@ admin.site.register(Product, ProductAdmin)
 admin.site.register(Unit, UnitAdmin)
 admin.site.register(RecipeIngredient, RecipeIngredientAdmin)
 admin.site.register(Favorites, FavoritesAdmin)
+admin.site.register(Follow, FollowAdmin)
+admin.site.register(RecipeTag, RecipeTagAdmin)
+admin.site.register(Cart, CartAdmin)

@@ -1,15 +1,23 @@
 # from django.shortcuts import get_object_or_404
-# # from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, viewsets, permissions, pagination
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import (
+    filters,
+    serializers,
+    viewsets,
+    permissions,
+    pagination,
+)
 
 # from rest_framework.permissions import IsAuthenticatedOrReadOnly
-
+from .filters import RecipeFilter
 from .serializers import (
     IngredientSerializer,
     RecipeSerializer,
     TagSerializer,
 )
-from recipe.models import Ingredient, Recipe, Tag
+from recipe.models import Favorites, Ingredient, Recipe, Tag
 
 
 # from reviews.models import Category, Genre, Review, Title
@@ -40,10 +48,27 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    http_method_names = ('get', 'post', 'patch', 'delete')
+    http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = Recipe.objects.all()
     pagination_class = pagination.LimitOffsetPagination
     serializer_class = RecipeSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    # def partial_update(self, request, *args, **kwargs):
+    #     instance = self.get_object()
+    #     serializer = self.get_serializer(
+    #         instance, data=request.data, partial=True
+    #     )
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(serializer.data)
+    # def partial_update(self, request, *args, **kwargs):
+    #     return super().partial_update(request, *args, **kwargs)
+
+    # def update(self, request, *args, **kwargs):
+    #     return super().update(request, *args, **kwargs)
 
 
 # class CategoryViewSet(CreateReadDeleteModelViewSet):

@@ -1,7 +1,10 @@
+from django.core import validators
 from django.db import models
 from django.utils.text import slugify
 
+# from core.models import AbstactFavoriteCart
 from users.models import User
+from .validators import validate_time
 
 
 class Unit(models.Model):
@@ -33,15 +36,17 @@ class Ingredient(models.Model):
         Product,
         on_delete=models.CASCADE,
         verbose_name='Продукт',
-        max_length=50,
+        max_length=200,
     )
-    amount = models.IntegerField(verbose_name='Количество')
     measurement_unit = models.ForeignKey(
-        Unit, verbose_name='Единицы измерения', on_delete=models.CASCADE
+        Unit,
+        verbose_name='Единицы измерения',
+        on_delete=models.CASCADE,
+        max_length=200,
     )
 
     def __str__(self):
-        return f'{self.name}, {self.amount}, {self.measurement_unit}'
+        return f'{self.name}, {self.measurement_unit}'
 
     class Meta:
         verbose_name = 'Ингредиент'
@@ -49,9 +54,16 @@ class Ingredient(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField(verbose_name='Название тега', max_length=50)
-    color = models.CharField(verbose_name='HEX-код цвета', max_length=7)
-    slug = models.SlugField(verbose_name='Слаг')
+    name = models.CharField(verbose_name='Название тега', max_length=200)
+    color = models.CharField(
+        verbose_name='HEX-код цвета', max_length=7, blank=True, null=True
+    )
+    slug = models.SlugField(
+        verbose_name='Слаг',
+        max_length=200,
+        validators=[validators.validate_slug],
+        # unique=True,  # по спецификации уникальное
+    )
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name, allow_unicode=True)
@@ -76,7 +88,7 @@ class Recipe(models.Model):
     name = models.CharField(
         verbose_name='Название',
         help_text='Введите название рецепта',
-        max_length=255,
+        max_length=200,
     )
     image = models.FileField(
         verbose_name='Изображние',
@@ -95,20 +107,17 @@ class Recipe(models.Model):
     cooking_time = models.IntegerField(
         verbose_name='Время приготовления',
         help_text='Введите время приготовления в минутах',
+        validators=(validate_time,),
     )
     pub_date = models.DateTimeField(
-        verbose_name='Дата публикации', auto_now_add=True
+        verbose_name='Дата публикации',
+        auto_now_add=True,
     )
 
     def __str__(self):
         return self.name
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['author', 'name'], name='unique_recipe'
-            )
-        ]
         ordering = ('-pub_date',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
@@ -128,27 +137,37 @@ class RecipeTag(models.Model):
 
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
-        Recipe, verbose_name='Рецепт', on_delete=models.CASCADE
+        Recipe,
+        verbose_name='Рецепт',
+        related_name='inredients',
+        on_delete=models.CASCADE,
     )
     ingredient = models.ForeignKey(
-        Ingredient, verbose_name='Ингредиент', on_delete=models.CASCADE
+        Ingredient,
+        verbose_name='Ингредиент',
+        related_name='recipes',
+        on_delete=models.CASCADE,
+    )
+    amount = models.IntegerField(
+        verbose_name='Количество',
     )
 
     def __str__(self):
-        return f'Для {self.recipe} нужны: {self.ingredient}'
+        return f'Для {self.recipe} нужны: {self.ingredient} {self.amount}'
 
 
 class Favorites(models.Model):  # here to avoid circular import
     """Liked recipes"""
 
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='recipes'
+        User, on_delete=models.CASCADE, related_name='favorites'
     )
     recipe = models.ForeignKey(
-        Recipe, on_delete=models.CASCADE, related_name='users'
+        Recipe, on_delete=models.CASCADE, related_name='favorites'
     )
     pub_date = models.DateTimeField(
-        verbose_name='Дата добавления в избранное', auto_now_add=True
+        verbose_name='Дата добавления в избранное',
+        auto_now_add=True,
     )
 
     def __str__(self):
@@ -164,16 +183,27 @@ class Favorites(models.Model):  # here to avoid circular import
         ]
 
 
-class Cart(Favorites):  # here to avoid circular import
+class Cart(models.Model):  # here to avoid circular import
     """Recipes to buy"""
 
-    buy_date = models.DateTimeField(
-        verbose_name='Дата добавления в покупки', auto_now_add=True
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='cart'
+    )
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE, related_name='cart'
+    )
+    pub_date = models.DateTimeField(
+        verbose_name='Дата добавления в корзину',
+        auto_now_add=True,
     )
 
     def __str__(self):
         return f'{self.user} покупает {self.recipe}'
 
-    class Meta:
-        verbose_name = 'Покупка'
-        verbose_name_plural = 'Покупки'
+
+class Meta:
+    verbose_name = 'Покупка'
+    verbose_name_plural = 'Покупки'
+    constraints = [
+        models.UniqueConstraint(fields=['user', 'recipe'], name='unique_cart')
+    ]
