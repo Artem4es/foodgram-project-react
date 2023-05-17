@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-from users.models import Follow
 from recipe.models import (
     Cart,
     Favorites,
@@ -17,11 +16,6 @@ from recipe.models import (
 class CartAdmin(admin.ModelAdmin):
     list_display = ('user', 'recipe')
     search_fields = ('user', 'recipe')
-
-
-class FollowAdmin(admin.ModelAdmin):
-    list_display = ('user', 'author')
-    search_fields = ('user', 'author')
 
 
 class FavoritesAdmin(admin.ModelAdmin):
@@ -94,6 +88,5 @@ admin.site.register(Product, ProductAdmin)
 admin.site.register(Unit, UnitAdmin)
 admin.site.register(RecipeIngredient, RecipeIngredientAdmin)
 admin.site.register(Favorites, FavoritesAdmin)
-admin.site.register(Follow, FollowAdmin)
 admin.site.register(RecipeTag, RecipeTagAdmin)
 admin.site.register(Cart, CartAdmin)

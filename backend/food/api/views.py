@@ -1,40 +1,24 @@
-# from django.shortcuts import get_object_or_404
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import (
-    filters,
     serializers,
+    status,
     viewsets,
-    permissions,
     pagination,
 )
 
-# from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .filters import RecipeFilter
+from .permissions import AuthorAdminPermission
 from .serializers import (
     IngredientSerializer,
     RecipeSerializer,
+    RecipeSubscribeSerializer,
     TagSerializer,
 )
 from recipe.models import Favorites, Ingredient, Recipe, Tag
 
 
-# from reviews.models import Category, Genre, Review, Title
-# from .custom_viewsets import (
-#     CreateReadDeleteModelViewSet,
-#     CreateReadUpdateDeleteModelViewset,
-# )
-# from .filters import TitleFilter
-# from .permissions import AdminOrReadOnly, AuthorAdminModeratorPermission
-# from .serializers import (
-#     CategorySerializer,
-#     CommentSerializer,
-#     GenreSerializer,
-#     ReviewSerializer,
-#     TitlePostSerializer,
-#     TitleSerializer,
-# )
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
@@ -48,27 +32,48 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ('get', 'post', 'patch', 'delete')
     queryset = Recipe.objects.all()
     pagination_class = pagination.LimitOffsetPagination
     serializer_class = RecipeSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (AuthorAdminPermission,)
+    lookup_field = 'recipe_id'
 
-    # def partial_update(self, request, *args, **kwargs):
-    #     instance = self.get_object()
-    #     serializer = self.get_serializer(
-    #         instance, data=request.data, partial=True
-    #     )
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #     return Response(serializer.data)
-    # def partial_update(self, request, *args, **kwargs):
-    #     return super().partial_update(request, *args, **kwargs)
+    @action(
+        detail=True,
+        url_path=r'favorite',
+        methods=('post', 'delete'),
+    )
+    def subscribtion(self, request, recipe_id):
+        if not Recipe.objects.filter(id=recipe_id).exists():
+            raise serializers.ValidationError(
+                {"errors": f"Не существует рецепта с таким id: {recipe_id}"}
+            )
+        recipe = Recipe.objects.get(id=recipe_id)
+        cur_user = request.user
+        if recipe.author == cur_user:
+            raise serializers.ValidationError(
+                {
+                    "errors": "К сожалению, нельзя подписаться или отписаться от себя:)"
+                }
+            )
+        cur_user = request.user
+        if request.method == 'DELETE':
+            if not Favorites.objects.filter(
+                user=cur_user, recipe=recipe
+            ).exists():
+                raise serializers.ValidationError(
+                    {"errors": "Вы не подписаны на этот рецепт"}
+                )
+            Favorites.objects.get(user=cur_user, recipe=recipe).delete()
 
-    # def update(self, request, *args, **kwargs):
-    #     return super().update(request, *args, **kwargs)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        elif request.method == 'POST':
+            Favorites.objects.get_or_create(user=cur_user, recipe=recipe)
+            serializer = RecipeSubscribeSerializer(instance=recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 # class CategoryViewSet(CreateReadDeleteModelViewSet):

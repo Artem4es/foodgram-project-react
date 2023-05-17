@@ -40,6 +40,14 @@ class User(AbstractUser):
     password = models.CharField(
         max_length=100, blank=False, verbose_name='Пароль'
     )
+    role = models.CharField(
+        max_length=20,
+        choices=USER_ROLES,
+        default=USER,
+        blank=False,
+        # blank=True,
+        verbose_name="Роль",
+    )
 
     class Meta:
         ordering = ('id',)

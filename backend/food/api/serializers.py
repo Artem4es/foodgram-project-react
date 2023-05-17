@@ -35,6 +35,9 @@ class IngredientSerializer(serializers.ModelSerializer):
     )
     amount = serializers.IntegerField(required=True)  # в спецификации не req.
 
+    def validate(self, attrs):
+        return super().validate(attrs)
+
     def validate_amount(self, value):
         if value < 1:
             raise serializers.ValidationError(
@@ -110,6 +113,13 @@ class AuthorSerializer(serializers.ModelSerializer):
         )
 
 
+class RecipeSubscribeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
 class RecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField(required=True)
     tags = TagSerializer(required=True, many=True)
@@ -117,6 +127,9 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientSerializer(required=True, many=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+
+    def validate(self, attrs):
+        return super().validate(attrs)
 
     def get_is_favorited(self, obj):
         """Избранные рецепты"""
@@ -193,10 +206,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'У вас уже есть рецепт с таким названием!'
             )
-        if not value:
-            raise serializers.ValidationError(
-                'Поле ingredients не должно быть пустым!'
-            )
 
         return value
 
@@ -242,20 +251,14 @@ class RecipeSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        # Только автор может через Permissions
-        tags = validated_data.get('tags')  # а если нет ?
-        if not tags:
-            raise serializers.ValidationError({"tags": "Обязательное поле."})
+        tags = validated_data.get('tags')
         ingredients = validated_data.get('ingredients')
-        if not ingredients:
-            raise serializers.ValidationError(
-                {"ingredients": "Обязательное поле."}
-            )
-        curr_user = self.context.get('request').user
-        instance.name = validated_data.get('name')
-        instance.image = validated_data.get('image')
-        instance.text = validated_data.get('text')
-        instance.cooking_time = validated_data.get('cooking_time')
+        instance.name = validated_data.get('name', instance.name)
+        instance.image = validated_data.get('image', instance.image)
+        instance.text = validated_data.get('text', instance.text)
+        instance.cooking_time = validated_data.get(
+            'cooking_time', instance.cooking_time
+        )
         instance.save()
 
         RecipeTag.objects.filter(recipe_id=instance.id).delete()
@@ -277,18 +280,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         kwargs['partial'] = True
         return self.update(request, *args, **kwargs)
 
-    # def validators(self):
-    #     return super().validators
 
-    # def is_valid(self, *, raise_exception=False):
-    #     return super().is_valid(raise_exception=raise_exception)
-
-    # def get_validators(self):
-    #     return super().get_validators()
-
-    # def validated_data(self):
-    #     return super().validated_data
-
+# class AddDeleteRecipeSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Favorites
+#         field
 
 # class ReviewSerializer(serializers.ModelSerializer):
 #     author = serializers.SlugRelatedField(
