@@ -1,6 +1,10 @@
-from rest_framework.decorators import action
-from rest_framework.response import Response
+import os
+
+from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework import (
     serializers,
     status,
@@ -9,6 +13,7 @@ from rest_framework import (
 )
 
 from .filters import RecipeFilter
+from .functions import create_pdf, get_ingredients
 from .permissions import AuthorAdminPermission
 from .serializers import (
     IngredientSerializer,
@@ -16,7 +21,8 @@ from .serializers import (
     RecipeSubscribeSerializer,
     TagSerializer,
 )
-from recipe.models import Favorites, Ingredient, Recipe, Tag
+from food.settings import MEDIA_ROOT
+from recipe.models import Cart, Favorites, Ingredient, Recipe, Tag
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -39,19 +45,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     permission_classes = (AuthorAdminPermission,)
-    lookup_field = 'recipe_id'
+    # lookup_field = 'recipe_id'
 
     @action(
         detail=True,
         url_path=r'favorite',
         methods=('post', 'delete'),
     )
-    def subscribtion(self, request, recipe_id):
-        if not Recipe.objects.filter(id=recipe_id).exists():
+    def subscribtion(self, request, pk):
+        if not Recipe.objects.filter(id=pk).exists():
             raise serializers.ValidationError(
-                {"errors": f"Не существует рецепта с таким id: {recipe_id}"}
+                {"errors": f"Не существует рецепта с таким id: {pk}"}
             )
-        recipe = Recipe.objects.get(id=recipe_id)
+        recipe = Recipe.objects.get(id=pk)
         cur_user = request.user
         if recipe.author == cur_user:
             raise serializers.ValidationError(
@@ -74,6 +80,49 @@ class RecipeViewSet(viewsets.ModelViewSet):
             Favorites.objects.get_or_create(user=cur_user, recipe=recipe)
             serializer = RecipeSubscribeSerializer(instance=recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(methods=('get',), detail=False, url_path=r'download_shopping_cart')
+    def download_file(self, *args, **kwargs):
+        self.permission_classes = (IsAuthenticated,)
+        self.check_permissions(self.request)
+        cur_user = self.request.user
+        recipes_id = cur_user.cart.all().values_list('recipe_id', flat=True)
+        if not recipes_id:
+            raise serializers.ValidationError('У вас нет рецептов в корзине!')
+        ingredients = get_ingredients(recipes_id)
+        file_path, file_name = create_pdf(ingredients)
+        document = open(file_path, 'rb')
+        response = HttpResponse(document, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename={file_name}'
+        return response
+
+    @action(methods=('post', 'delete'), detail=True, url_path=r'shopping_cart')
+    def change_cart(
+        self, request, pk
+    ):  # subscribtion(self, request, recipe_id):
+        if not Recipe.objects.filter(id=pk).exists():
+            raise serializers.ValidationError(
+                {"errors": f"Не существует рецепта с таким id: {pk}"}
+            )
+        if request.method == 'POST':
+            cur_user = request.user
+            recipe = Recipe.objects.get(id=pk)
+            if Cart.objects.filter(user=cur_user, recipe=recipe).exists():
+                raise serializers.ValidationError(
+                    {"errors": "У вас в корзине уже есть этот рецепт"}
+                )
+            Cart.objects.create(user=cur_user, recipe=recipe)
+            serializer = RecipeSubscribeSerializer(instance=recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif request.method == 'DELETE':
+            cur_user = request.user
+            recipe = Recipe.objects.get(id=pk)
+            if not Cart.objects.filter(user=cur_user, recipe=recipe).exists():
+                raise serializers.ValidationError(
+                    {"errors": "У вас нет этого рецепта в корзине"}
+                )
+            Cart.objects.get(user=cur_user, recipe=recipe).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # class CategoryViewSet(CreateReadDeleteModelViewSet):

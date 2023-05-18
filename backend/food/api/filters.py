@@ -1,9 +1,7 @@
 from django_filters import (
-    BooleanFilter,
     CharFilter,
     FilterSet,
     MultipleChoiceFilter,
-    ModelMultipleChoiceFilter,
 )
 from rest_framework import serializers
 
@@ -53,8 +51,6 @@ class RecipeFilter(FilterSet):
             return queryset.filter(id__in=recipes_list)
 
         return queryset.exclude(id__in=recipes_list)
-
-    # genre = CharFilter(field_name='genre__slug')
 
     class Meta:
         model = Recipe

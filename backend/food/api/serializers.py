@@ -35,6 +35,10 @@ class IngredientSerializer(serializers.ModelSerializer):
     )
     amount = serializers.IntegerField(required=True)  # в спецификации не req.
 
+    class Meta:
+        model = Ingredient
+        fields = ('id', 'name', 'measurement_unit', 'amount')
+
     def validate(self, attrs):
         return super().validate(attrs)
 
@@ -66,15 +70,6 @@ class IngredientSerializer(serializers.ModelSerializer):
             )[0].amount
             instance.amount = amount
             return super().to_representation(instance)
-
-    class Meta:
-        model = Ingredient
-        fields = (
-            'id',
-            'name',
-            'measurement_unit',
-            'amount',
-        )
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -114,7 +109,6 @@ class AuthorSerializer(serializers.ModelSerializer):
 
 
 class RecipeSubscribeSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
@@ -127,6 +121,21 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientSerializer(required=True, many=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Recipe
+        fields = (
+            'id',
+            'tags',
+            'author',
+            'ingredients',
+            'is_favorited',
+            'is_in_shopping_cart',
+            'name',
+            'image',
+            'text',
+            'cooking_time',
+        )
 
     def validate(self, attrs):
         return super().validate(attrs)
@@ -184,21 +193,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         self.context['instance'] = instance  # for Ingr. ser-zer amount field
         return super().to_representation(instance)
-
-    class Meta:
-        model = Recipe
-        fields = (
-            'id',
-            'tags',
-            'author',
-            'ingredients',
-            'is_favorited',
-            'is_in_shopping_cart',
-            'name',
-            'image',
-            'text',
-            'cooking_time',
-        )
 
     def validate_name(self, value):
         cur_user = self.context.get('request').user

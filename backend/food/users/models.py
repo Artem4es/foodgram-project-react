@@ -45,7 +45,6 @@ class User(AbstractUser):
         choices=USER_ROLES,
         default=USER,
         blank=False,
-        # blank=True,
         verbose_name="Роль",
     )
 
