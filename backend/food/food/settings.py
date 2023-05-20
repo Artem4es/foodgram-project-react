@@ -158,9 +158,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'api.custom_pagination.PageLimitPagination',
     'PAGE_SIZE': 5,
 }
 
@@ -177,9 +176,14 @@ SIMPLE_JWT = {
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'SERIALIZERS': {
-        'user_create': 'users.serializers.UserSignUpSerializer',
-        'user': 'users.serializers.UserSerializer',
-        'current_user': 'users.serializers.UserSerializer',  # использовать один для нескольких?
+        'user_create': 'users.serializers.CustomUserCreateSerializer',
+        'user': 'users.serializers.CustomUserSerializer',
+        'current_user': 'users.serializers.CustomUserSerializer',
+        # 'token_create': 'users.serializers.CustomTokenCreateSerializer',
+    },
+    'PERMISSIONS': {
+        'HIDE_USERS': False,  # лишнее?
+        'user_list': ['rest_framework.permissions.AllowAny'],  # лишнее
     },
 }
 

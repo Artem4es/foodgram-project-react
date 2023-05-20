@@ -1,34 +1,105 @@
-import os
-
+from djoser.views import UserViewSet, TokenCreateView
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import (
     serializers,
     status,
     viewsets,
-    pagination,
 )
 
+from .custom_pagination import PageLimitPagination
 from .filters import RecipeFilter
 from .functions import create_pdf, get_ingredients
-from .permissions import AuthorAdminPermission
+from .permissions import AuthorAdminPermission, UnregisteredUserPermission
 from .serializers import (
     IngredientSerializer,
     RecipeSerializer,
     RecipeSubscribeSerializer,
     TagSerializer,
 )
-from food.settings import MEDIA_ROOT
 from recipe.models import Cart, Favorites, Ingredient, Recipe, Tag
+from users.models import Follow, User
+from users.serializers import (
+    CustomUserSerializer,
+    SubscribeUserSerializer,
+)
+
+
+class CustomTokenCreateView(TokenCreateView):
+    """Status code change from 200 to 201"""
+
+    def _action(self, serializer):
+        response = super()._action(serializer)
+        response.status_code = status.HTTP_201_CREATED
+        return response
+
+
+class CustomUserViewSet(UserViewSet):  # можно в settings.py настроить?
+    serializer_class = CustomUserSerializer
+    permission_classes = (UnregisteredUserPermission,)  # для users/
+
+    @action(detail=True, methods=('post', 'delete'), url_path=r'subscribe')
+    def subscribe(self, request, id):
+        self.check_permissions(request)
+        if not User.objects.filter(id=id).exists():
+            error = serializers.ValidationError(
+                {'detail': f'Не существует пользователя с таким id: {id}'}
+            )
+            error.status_code = status.HTTP_404_NOT_FOUND
+            raise error
+        author = User.objects.get(id=id)
+        cur_user = request.user
+        if request.method == 'POST':
+            if author == cur_user:
+                raise serializers.ValidationError(
+                    'К сожалению, нельзя подписаться на себя :('
+                )
+            if Follow.objects.filter(user=cur_user, author=author).exists():
+                raise serializers.ValidationError(
+                    'Вы уже подписаны на этого пользователя!'
+                )
+            Follow.objects.create(user=cur_user, author=author)
+            serializer = SubscribeUserSerializer(
+                instance=author, context={'request': request}
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif request.method == 'DELETE':
+            if not Follow.objects.filter(
+                user=cur_user, author=author
+            ).exists():
+                raise serializers.ValidationError(
+                    {'errors': 'Вы не подписаны на этого пользователя!'}
+                )
+            Follow.objects.filter(user=cur_user, author=author).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SubscriptionsUserViewSet(
+    viewsets.ModelViewSet  # объединить с users/ нельзя?
+):  # наследовать от CustomUserViewSet?
+    queryset = User.objects.all()
+    http_method_names = ('get',)
+    pagination_class = PageLimitPagination
+    serializer_class = SubscribeUserSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        user = self.request.user
+        subscriptions = user.following.all().values_list('author', flat=True)
+        return self.queryset.filter(id__in=subscriptions)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
+    filter_backends = (SearchFilter,)
+    search_fields = ('^name__name',)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -38,21 +109,20 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    http_method_names = ('get', 'post', 'patch', 'delete')
     queryset = Recipe.objects.all()
-    pagination_class = pagination.LimitOffsetPagination
+    http_method_names = ('get', 'post', 'patch', 'delete')
+    pagination_class = PageLimitPagination
     serializer_class = RecipeSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     permission_classes = (AuthorAdminPermission,)
-    # lookup_field = 'recipe_id'
 
     @action(
         detail=True,
         url_path=r'favorite',
         methods=('post', 'delete'),
     )
-    def subscribtion(self, request, pk):
+    def subscription(self, request, pk):  # опечатка
         if not Recipe.objects.filter(id=pk).exists():
             raise serializers.ValidationError(
                 {"errors": f"Не существует рецепта с таким id: {pk}"}
@@ -62,10 +132,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if recipe.author == cur_user:
             raise serializers.ValidationError(
                 {
-                    "errors": "К сожалению, нельзя подписаться или отписаться от себя:)"
+                    "errors": "К сожалению, нельзя подписаться или отписаться от своих рецептов:)"
                 }
             )
-        cur_user = request.user
         if request.method == 'DELETE':
             if not Favorites.objects.filter(
                 user=cur_user, recipe=recipe
@@ -77,6 +146,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
             return Response(status=status.HTTP_204_NO_CONTENT)
         elif request.method == 'POST':
+            if Favorites.objects.filter(user=cur_user, recipe=recipe).exists():
+                raise serializers.ValidationError(
+                    {"errors": "Вы уже подписаны на этот рецепт"}
+                )
             Favorites.objects.get_or_create(user=cur_user, recipe=recipe)
             serializer = RecipeSubscribeSerializer(instance=recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -97,16 +170,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return response
 
     @action(methods=('post', 'delete'), detail=True, url_path=r'shopping_cart')
-    def change_cart(
-        self, request, pk
-    ):  # subscribtion(self, request, recipe_id):
+    def change_cart(self, request, pk):
         if not Recipe.objects.filter(id=pk).exists():
             raise serializers.ValidationError(
                 {"errors": f"Не существует рецепта с таким id: {pk}"}
             )
+        cur_user = request.user
+        recipe = Recipe.objects.get(id=pk)
         if request.method == 'POST':
-            cur_user = request.user
-            recipe = Recipe.objects.get(id=pk)
             if Cart.objects.filter(user=cur_user, recipe=recipe).exists():
                 raise serializers.ValidationError(
                     {"errors": "У вас в корзине уже есть этот рецепт"}
@@ -115,82 +186,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             serializer = RecipeSubscribeSerializer(instance=recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         elif request.method == 'DELETE':
-            cur_user = request.user
-            recipe = Recipe.objects.get(id=pk)
             if not Cart.objects.filter(user=cur_user, recipe=recipe).exists():
                 raise serializers.ValidationError(
                     {"errors": "У вас нет этого рецепта в корзине"}
                 )
             Cart.objects.get(user=cur_user, recipe=recipe).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-# class CategoryViewSet(CreateReadDeleteModelViewSet):
-#     queryset = Category.objects.all()
-#     serializer_class = CategorySerializer
-#     filter_backends = (filters.SearchFilter,)
-#     search_fields = ('name',)
-#     lookup_field = 'slug'
-#     permission_classes = (AdminOrReadOnly,)
-
-
-# class GenreViewSet(CreateReadDeleteModelViewSet):
-#     queryset = Genre.objects.all()
-#     serializer_class = GenreSerializer
-#     filter_backends = (filters.SearchFilter,)
-#     search_fields = ('name',)
-#     lookup_field = 'slug'
-#     permission_classes = (AdminOrReadOnly,)
-
-
-# class TitleViewSet(CreateReadUpdateDeleteModelViewset):
-#     http_method_names = (
-#         "get",
-#         "post",
-#         "patch",
-#         "delete",
-#     )
-#     queryset = Title.objects.all()
-#     serializer_class = TitleSerializer
-#     filter_backends = (DjangoFilterBackend,)
-#     filterset_class = TitleFilter
-#     permission_classes = (AdminOrReadOnly,)
-
-#     def get_serializer_class(self):
-#         if self.action in ('create', 'partial_update'):
-#             return TitlePostSerializer
-#         return TitleSerializer
-
-
-# class ReviewViewSet(viewsets.ModelViewSet):
-#     serializer_class = ReviewSerializer
-#     permission_classes = (
-#         AuthorAdminModeratorPermission,
-#         IsAuthenticatedOrReadOnly,
-#     )
-
-#     def get_queryset(self):
-#         title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
-#         return title.reviews.all()
-
-#     def perform_create(self, serializer):
-#         user = self.request.user
-#         title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
-#         if serializer.is_valid():
-#             serializer.save(author=user, title=title)
-
-
-# class CommentViewSet(viewsets.ModelViewSet):
-#     serializer_class = CommentSerializer
-#     permission_classes = (
-#         AuthorAdminModeratorPermission,
-#         IsAuthenticatedOrReadOnly,
-#     )
-
-#     def get_queryset(self):
-#         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
-#         return review.comments.all()
-
-#     def perform_create(self, serializer):
-#         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
-#         serializer.save(author=self.request.user, review=review)
