@@ -4,6 +4,8 @@ from django.db import models
 
 from .validators import validate_username
 
+# from recipe.models import Recipe
+
 # User = get_user_model()
 
 
@@ -20,31 +22,22 @@ class User(AbstractUser):
         validators=(validate_username,),
         max_length=150,
         unique=True,
-        blank=False,
-        null=False,
         verbose_name='Логин',
     )
-    first_name = models.CharField(
-        verbose_name='Имя', max_length=150, blank=True
-    )
-    last_name = models.CharField(
-        verbose_name='Фамилия', max_length=150, blank=True
-    )
+    first_name = models.CharField(verbose_name='Имя', max_length=150)
+    last_name = models.CharField(verbose_name='Фамилия', max_length=150)
     email = models.EmailField(
         max_length=254,
         unique=True,
-        blank=False,
-        null=False,
         verbose_name='Email',
     )
     password = models.CharField(
-        max_length=100, blank=False, verbose_name='Пароль'
+        max_length=150, blank=False, verbose_name='Пароль'
     )
     role = models.CharField(
         max_length=20,
         choices=USER_ROLES,
         default=USER,
-        blank=False,
         verbose_name="Роль",
     )
 
@@ -75,13 +68,13 @@ class Follow(models.Model):
         User,
         on_delete=models.CASCADE,
         verbose_name='Подписчик',
-        related_name='followers',
+        related_name='following',
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         verbose_name='Автор',
-        related_name='authors',
+        related_name='followers',
     )
 
     pub_date = models.DateTimeField(

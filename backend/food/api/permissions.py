@@ -36,19 +36,18 @@ class AuthorAdminPermission(IsAuthenticatedOrReadOnly):
         )
 
 
-# class IsSuperUser(BasePermission):
-#     """
-#     Права доступа пользователя должны быть суперадмин.
-#     """
+class UnregisteredUserPermission(BasePermission):
+    """
+    A base class from which all permission classes should inherit.
+    """
 
-#     def has_permission(self, request, view):
-#         return request.user.is_authenticated and request.user.is_superuser
-
-
-# class IsAdmin(BasePermission):
-#     """
-#     Права доступа пользователя должны быть админскими.
-#     """
-
-#     def has_permission(self, request, view):
-#         return request.user.is_authenticated and (request.user.is_admin)
+    def has_permission(self, request, view):  # может можно упростить)
+        # if view.action   .name
+        if request.get_full_path() == 'api/users':
+            return True
+        # if (
+        #     request.method in ('GET', 'POST')
+        #     and view.action != 'me'  # /users/
+        # ):  # переделать на эндпоинт
+        # return True
+        return bool(request.user and request.user.is_authenticated)
