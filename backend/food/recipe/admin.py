@@ -55,26 +55,6 @@ class RecipeTagAdmin(admin.ModelAdmin):
     search_fields = ('recipe', 'tag')
 
 
-from django.contrib import admin
-
-
-class CustomBooleanFilter(admin.SimpleListFilter):
-    title = 'Custom Boolean Field'  # Displayed title for the filter
-    parameter_name = 'custom_boolean_field'  # URL parameter name
-
-    def lookups(self, request, model_admin):
-        return (
-            ('true', 'True'),
-            ('false', 'False'),
-        )
-
-    def queryset(self, request, queryset):
-        if self.value() == 'true':
-            return queryset.filter(custom_boolean_field=True)
-        if self.value() == 'false':
-            return queryset.filter(custom_boolean_field=False)
-
-
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
         'id',
