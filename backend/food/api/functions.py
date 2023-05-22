@@ -1,11 +1,10 @@
 import os
-import pathlib
 import uuid
 
 from reportlab.pdfbase import pdfmetrics, ttfonts
-from food.settings import MEDIA_ROOT
 from reportlab.pdfgen import canvas
 
+from food.settings import MEDIA_ROOT
 from recipe.models import Ingredient, Recipe, RecipeIngredient
 
 
@@ -29,12 +28,9 @@ def get_ingredients(recipes_id):
 def create_pdf(ingredients):
     """Returns pdf with recipes"""
     filename = f'{str(uuid.uuid4())}.pdf'
-    file_path = os.path.join(MEDIA_ROOT, 'pdf', filename)  # путь к pdf
-    # p = pathlib.Path(__file__).parent.resolve()
-    # path = os.path.join(p, '1.jpg')
+    file_path = os.path.join(MEDIA_ROOT, 'pdf', filename)
     logo_path = os.path.join(MEDIA_ROOT, 'logo.jpg')
     p = canvas.Canvas(filename=file_path)
-
     p.drawImage(image=logo_path, x=195, y=500)
     pdfmetrics.registerFont(ttfonts.TTFont('Verdana', 'Verdana.ttf'))
     p.setFont("Verdana", 14)

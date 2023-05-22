@@ -1,21 +1,24 @@
 import base64
 
+from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from recipe.models import (
     Cart,
     Favorites,
     Ingredient,
-    Product,
     Recipe,
     RecipeIngredient,
     RecipeTag,
     Tag,
 )
+from recipe.validators import (
+    validate_ingredients,
+    validate_ingredient_id,
+    validate_recipe_name,
+    validate_tags,
+)
 from users.models import Follow, User
-
-
-from django.core.files.base import ContentFile
 
 
 class Base64ImageField(serializers.ImageField):
@@ -33,40 +36,28 @@ class IngredientSerializer(serializers.ModelSerializer):
     measurement_unit = serializers.SlugRelatedField(
         slug_field='name', read_only=True
     )
-    amount = serializers.IntegerField(required=True)  # в спецификации не req.
+    amount = serializers.IntegerField(required=True, min_value=1)
 
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
-    def validate_amount(self, value):
-        if value < 1:
-            raise serializers.ValidationError(
-                'Количество не может быть меньше 1'
-            )
-        return value
-
     def validate_id(self, value):
-        if not Ingredient.objects.filter(id=value).exists():
-            raise serializers.ValidationError(
-                f'Не существует ингредиент с таким id: {value}'
-            )
+        validate_ingredient_id(value, Ingredient)
         return value
 
     def to_representation(self, instance):
-        if 'ingredients' in (
-            self.context.get('request').get_full_path()
-        ):  # не делать жёстко
+        if self.context.get('view').basename == 'ingredients':
             if self.fields.get('amount'):
                 del self.fields['amount']
             return super().to_representation(instance)
-        else:
-            recipe = self.context.get('instance')
-            amount = RecipeIngredient.objects.filter(
-                ingredient=instance, recipe=recipe
-            )[0].amount
-            instance.amount = amount
-            return super().to_representation(instance)
+
+        recipe = self.context.get('instance')
+        amount = RecipeIngredient.objects.filter(
+            ingredient=instance, recipe=recipe
+        )[0].amount
+        instance.amount = amount
+        return super().to_representation(instance)
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -74,16 +65,22 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields = ('id', 'name', 'color', 'slug')
 
-    def validate(self, attrs):
-        return super().validate(attrs)
-
     def to_internal_value(self, data):
-        return super().to_internal_value(data)
+        if not isinstance(data, dict):
+            cur_tag = validate_tags(data, Tag)
+            tag = {}
+            tag['id'] = cur_tag.id
+            tag['name'] = cur_tag.name
+            tag['color'] = cur_tag.color
+            tag['slug'] = cur_tag.slug
+            data = tag
+
+        return data
 
 
 class AuthorSerializer(
     serializers.ModelSerializer
-):  # точно такое же как CustomUserSerializer
+):  # here to avoid circular import error
     is_subscribed = serializers.SerializerMethodField()
 
     def get_is_subscribed(self, obj):
@@ -157,32 +154,17 @@ class RecipeSerializer(serializers.ModelSerializer):
             return True
         return False
 
-    def to_internal_value(self, data):  # более изящная валидация!
-        tags = data.get('tags')  # нельзя перенсти в tags этот метод?
-        if not tags:
+    def to_internal_value(self, data):
+        tags = data.get('tags')
+        if tags is None:
             return super().to_internal_value(data)
         tag_list = []
-        for d in tags:
-            if not isinstance(d, int):
-                raise serializers.ValidationError(
-                    {
-                        'Значение Tag должно быть типом int. Введено': type(
-                            d
-                        ).__name__
-                    }
-                )
-            tag_dict = {}
-            try:
-                tag = Tag.objects.get(id=d)
-            except Tag.DoesNotExist:
-                raise serializers.ValidationError(
-                    {'Тег с id': f'{d} не существует'}
-                )
-            tag_dict['id'] = tag.id
-            tag_dict['name'] = tag.name
-            tag_dict['color'] = tag.color
-            tag_dict['slug'] = tag.slug
-            tag_list.append(tag_dict)
+        if tags == []:
+            tags = ['empty']
+        for tag in tags:
+            tags = TagSerializer(Tag, data=tag)
+            tags.is_valid(raise_exception=True)
+            tag_list.append(tags.validated_data)
         data['tags'] = tag_list
         return super().to_internal_value(data)
 
@@ -192,30 +174,11 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def validate_name(self, value):
         cur_user = self.context.get('request').user
-        if Recipe.objects.filter(author=cur_user, name=value).exists():
-            raise serializers.ValidationError(
-                'У вас уже есть рецепт с таким названием!'
-            )
-
-        return value
+        return validate_recipe_name(value, cur_user, Recipe)
 
     def validate_ingredients(self, value):
         """Responsible for internal part of ingredients"""
-        if not value:
-            raise serializers.ValidationError(
-                'Поле ingredients не должно быть пустым!'
-            )
-
-        return value
-
-    def validate_tags(self, value):
-        """Responsible for internal part of tags"""
-        if not value:
-            raise serializers.ValidationError(
-                'Поле Tag не должно быть пустым!'
-            )
-
-        return value
+        return validate_ingredients(value)
 
     def create(self, validated_data):
         author = self.context.get('request').user

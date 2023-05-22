@@ -13,6 +13,10 @@ class UserAdmin(admin.ModelAdmin):
         'password',
         'role',
     )
+    list_filter = (
+        'first_name',
+        'email',
+    )
 
 
 class FollowAdmin(admin.ModelAdmin):

@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-from datetime import timedelta
 import os
 from pathlib import Path
 
@@ -43,7 +42,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'recipe.apps.RecipeConfig',
     'api.apps.ApiConfig',
-    'core.apps.CoreConfig',
     'users.apps.UsersConfig',
     'rest_framework',
     'rest_framework.authtoken',
@@ -163,28 +161,17 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 5,
 }
 
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_TOKEN_CLASSES': (
-        'rest_framework_simplejwt.tokens.AccessToken',
-    ),  # JWT возможно не нужен
-}
-
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'SERIALIZERS': {
         'user_create': 'users.serializers.CustomUserCreateSerializer',
         'user': 'users.serializers.CustomUserSerializer',
         'current_user': 'users.serializers.CustomUserSerializer',
-        # 'token_create': 'users.serializers.CustomTokenCreateSerializer',
     },
     'PERMISSIONS': {
-        'HIDE_USERS': False,  # лишнее?
-        'user_list': ['rest_framework.permissions.AllowAny'],  # лишнее
+        'user_list': ['rest_framework.permissions.AllowAny'],
     },
+    'HIDE_USERS': False,
 }
 
 AUTH_USER_MODEL = 'users.User'

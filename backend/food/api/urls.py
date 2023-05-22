@@ -3,33 +3,32 @@ from rest_framework.routers import DefaultRouter
 
 app_name = 'api'
 
-from .views import (
-    CustomTokenCreateView,
-    CustomUserViewSet,
-    SubscriptionsUserViewSet,
+from recipe.views import (
     IngredientViewSet,
     RecipeViewSet,
     TagViewSet,
 )
+from users.views import (
+    CustomTokenCreateView,
+    CustomUserViewSet,
+)
 
 app_name = 'api'
-
 router = DefaultRouter()
-# router.register(r'users', UsersViewSet, basename='users')
 
-
-router.register(r'tags', TagViewSet)  # добавить basename
-router.register(r'users/subscriptions', SubscriptionsUserViewSet)
-router.register(r'users', CustomUserViewSet),
-router.register(r'recipes', RecipeViewSet)
-router.register(r'ingredients', IngredientViewSet)
-# router.register(r'users/subscriptions', SubscribeUserViewSet)
+router.register(r'tags', TagViewSet, basename='tags')
+router.register(r'users', CustomUserViewSet, basename='users'),
+router.register(r'recipes', RecipeViewSet, basename='recipes')
+router.register(r'ingredients', IngredientViewSet, basename='ingredients')
 
 
 urlpatterns = [
     path('', include(router.urls)),
-    # Djoser создаст набор необходимых эндпоинтов.
-    path('', include('djoser.urls')),  # внутри обрабатывает users/
+    path('', include('djoser.urls')),
+    path(
+        'auth/token/login/',
+        CustomTokenCreateView.as_view(),
+        name='token_create',
+    ),
     path('auth/', include('djoser.urls.authtoken')),
-    path('auth/token/login/', CustomTokenCreateView.as_view()),
 ]

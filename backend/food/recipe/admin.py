@@ -34,8 +34,9 @@ class UnitAdmin(admin.ModelAdmin):
 
 
 class IngredientAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'measurement_unit')
-    search_fields = ('id', 'name', 'measurement_unit')
+    list_display = ('id', 'product', 'measurement_unit')
+    list_filter = ('product',)
+    search_fields = ('id', 'product', 'measurement_unit')
 
 
 class TagAdmin(admin.ModelAdmin):
@@ -54,31 +55,48 @@ class RecipeTagAdmin(admin.ModelAdmin):
     search_fields = ('recipe', 'tag')
 
 
+from django.contrib import admin
+
+
+class CustomBooleanFilter(admin.SimpleListFilter):
+    title = 'Custom Boolean Field'  # Displayed title for the filter
+    parameter_name = 'custom_boolean_field'  # URL parameter name
+
+    def lookups(self, request, model_admin):
+        return (
+            ('true', 'True'),
+            ('false', 'False'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'true':
+            return queryset.filter(custom_boolean_field=True)
+        if self.value() == 'false':
+            return queryset.filter(custom_boolean_field=False)
+
+
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
         'id',
-        # 'tags',
         'author',
-        # 'ingredients',
-        # 'is_favorited',
-        # 'is_in_shopping_cart',
         'name',
-        'image',
         'text',
         'cooking_time',
+        'fav_counter',
     )
+    list_filter = ('author', 'name', 'tags')
     search_fields = (
         'id',
-        # 'tags',
         'author',
-        # 'ingredients',
-        # 'is_favorited',
-        # 'is_in_shopping_cart',
         'name',
-        'image',
         'text',
         'cooking_time',
     )
+
+    def fav_counter(self, obj):
+        return obj.favorites.count()
+
+    fav_counter.short_description = 'Добавлен в избранное (раз)'
 
 
 admin.site.register(Tag, TagAdmin)

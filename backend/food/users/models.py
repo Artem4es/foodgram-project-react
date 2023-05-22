@@ -1,12 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-
 from .validators import validate_username
-
-# from recipe.models import Recipe
-
-# User = get_user_model()
 
 
 class User(AbstractUser):
@@ -23,9 +18,14 @@ class User(AbstractUser):
         max_length=150,
         unique=True,
         verbose_name='Логин',
+        db_index=True,
     )
-    first_name = models.CharField(verbose_name='Имя', max_length=150)
-    last_name = models.CharField(verbose_name='Фамилия', max_length=150)
+    first_name = models.CharField(
+        verbose_name='Имя', max_length=150, db_index=True
+    )
+    last_name = models.CharField(
+        verbose_name='Фамилия', max_length=150, db_index=True
+    )
     email = models.EmailField(
         max_length=254,
         unique=True,

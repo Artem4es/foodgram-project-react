@@ -2,7 +2,6 @@ from django.core import validators
 from django.db import models
 from django.utils.text import slugify
 
-# from core.models import AbstactFavoriteCart
 from users.models import User
 from .validators import validate_time
 
@@ -32,7 +31,7 @@ class Product(models.Model):
 
 
 class Ingredient(models.Model):
-    name = models.ForeignKey(
+    product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
         verbose_name='Продукт',
@@ -54,15 +53,19 @@ class Ingredient(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField(verbose_name='Название тега', max_length=200)
+    name = models.CharField(
+        verbose_name='Название тега', max_length=200, unique=True
+    )
     color = models.CharField(
-        verbose_name='HEX-код цвета', max_length=7, blank=True, null=True
+        verbose_name='HEX-код цвета',
+        max_length=7,
+        unique=True,
     )
     slug = models.SlugField(
         verbose_name='Слаг',
         max_length=200,
         validators=[validators.validate_slug],
-        # unique=True,  # по спецификации уникальное
+        unique=True,
     )
 
     def save(self, *args, **kwargs):
@@ -89,6 +92,7 @@ class Recipe(models.Model):
         verbose_name='Название',
         help_text='Введите название рецепта',
         max_length=200,
+        db_index=True,
     )
     image = models.FileField(
         verbose_name='Изображние',
@@ -134,6 +138,10 @@ class RecipeTag(models.Model):
     def __str__(self):
         return f'{self.recipe} помечен тегом {self.tag}'
 
+    class Meta:
+        verbose_name = 'Теги рецептов'
+        verbose_name_plural = 'Теги рецептов'
+
 
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
@@ -155,6 +163,10 @@ class RecipeIngredient(models.Model):
     def __str__(self):
         return f'Для {self.recipe} нужны: {self.ingredient} {self.amount}'
 
+    class Meta:
+        verbose_name = 'Ингредиенты рецептов'
+        verbose_name_plural = 'Ингредиенты рецептов'
+
 
 class Favorites(models.Model):  # here to avoid circular import
     """Liked recipes"""
@@ -174,8 +186,8 @@ class Favorites(models.Model):  # here to avoid circular import
         return f'{self.user} нравится {self.recipe}'
 
     class Meta:
-        verbose_name = 'Избранное'
-        verbose_name_plural = 'Избранные'
+        verbose_name = 'Избранные рецепты'
+        verbose_name_plural = 'Избранные рецепты'
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'recipe'], name='unique_favorite'
@@ -200,10 +212,11 @@ class Cart(models.Model):  # here to avoid circular import
     def __str__(self):
         return f'{self.user} покупает {self.recipe}'
 
-
-class Meta:
-    verbose_name = 'Покупка'
-    verbose_name_plural = 'Покупки'
-    constraints = [
-        models.UniqueConstraint(fields=['user', 'recipe'], name='unique_cart')
-    ]
+    class Meta:
+        verbose_name = 'Покупка'
+        verbose_name_plural = 'Покупки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'], name='unique_cart'
+            )
+        ]
