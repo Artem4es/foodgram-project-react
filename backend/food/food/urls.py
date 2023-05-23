@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path
 
-from api.custom_exceptions import custom404, custom_server_error
+from api.v1.custom_exceptions import custom404, custom_server_error
 
 handler404 = custom404
 handler500 = custom_server_error

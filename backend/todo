@@ -5,3 +5,10 @@
 ; модели и сериализаторы по приложениям? ok
 ; если не заполнить одно из полей ingredients при patch то нет нормальной ошибки cм.что хочет спецификация ок
 ; Оптимизация запросов? select_related и тд ок
+
+
+
+Вопросы:
+1.Нужно ли добавлять has_permission ecли класс наследуется от class AuthorAdminPermission(IsAuthenticatedOrReadOnly):
+2. AuthorSerializer не получается в приложение users/
+3.

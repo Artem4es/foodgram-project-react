@@ -2,8 +2,8 @@ from django.core import validators
 from django.db import models
 from django.utils.text import slugify
 
+from recipe.validators import validate_time
 from users.models import User
-from .validators import validate_time
 
 
 class Unit(models.Model):
@@ -11,23 +11,23 @@ class Unit(models.Model):
         verbose_name='Единица измерения', max_length=50, unique=True
     )
 
-    def __str__(self):
-        return self.name
-
     class Meta:
         verbose_name = 'Единица измерения'
         verbose_name_plural = 'Единицы измерения'
+
+    def __str__(self):
+        return self.name
 
 
 class Product(models.Model):
     name = models.CharField(verbose_name='Продукт', unique=True, max_length=50)
 
-    def __str__(self):
-        return self.name
-
     class Meta:
         verbose_name = 'Продукт'
         verbose_name_plural = 'Продукты'
+
+    def __str__(self):
+        return self.name
 
 
 class Ingredient(models.Model):
@@ -44,12 +44,12 @@ class Ingredient(models.Model):
         max_length=200,
     )
 
-    def __str__(self):
-        return f'{self.name} ({self.measurement_unit}) : '
-
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+
+    def __str__(self):
+        return f'{self.name} ({self.measurement_unit}) : '
 
 
 class Tag(models.Model):
@@ -72,12 +72,12 @@ class Tag(models.Model):
         self.slug = slugify(self.name, allow_unicode=True)
         super(Tag, self).save(*args, **kwargs)
 
-    def __str__(self):
-        return self.name
-
     class Meta:
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
+
+    def __str__(self):
+        return self.name
 
 
 class Recipe(models.Model):
@@ -118,13 +118,13 @@ class Recipe(models.Model):
         auto_now_add=True,
     )
 
-    def __str__(self):
-        return self.name
-
     class Meta:
         ordering = ('-pub_date',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+
+    def __str__(self):
+        return self.name
 
 
 class RecipeTag(models.Model):
@@ -135,12 +135,12 @@ class RecipeTag(models.Model):
         Tag, verbose_name='Тег рецепта', on_delete=models.CASCADE
     )
 
-    def __str__(self):
-        return f'{self.recipe} помечен тегом {self.tag}'
-
     class Meta:
         verbose_name = 'Теги рецептов'
         verbose_name_plural = 'Теги рецептов'
+
+    def __str__(self):
+        return f'{self.recipe} помечен тегом {self.tag}'
 
 
 class RecipeIngredient(models.Model):
@@ -160,12 +160,12 @@ class RecipeIngredient(models.Model):
         verbose_name='Количество',
     )
 
-    def __str__(self):
-        return f'Для {self.recipe} нужны: {self.ingredient} {self.amount}'
-
     class Meta:
         verbose_name = 'Ингредиенты рецептов'
         verbose_name_plural = 'Ингредиенты рецептов'
+
+    def __str__(self):
+        return f'Для {self.recipe} нужны: {self.ingredient} {self.amount}'
 
 
 class Favorites(models.Model):  # here to avoid circular import
@@ -182,9 +182,6 @@ class Favorites(models.Model):  # here to avoid circular import
         auto_now_add=True,
     )
 
-    def __str__(self):
-        return f'{self.user} нравится {self.recipe}'
-
     class Meta:
         verbose_name = 'Избранные рецепты'
         verbose_name_plural = 'Избранные рецепты'
@@ -193,6 +190,9 @@ class Favorites(models.Model):  # here to avoid circular import
                 fields=['user', 'recipe'], name='unique_favorite'
             )
         ]
+
+    def __str__(self):
+        return f'{self.user} нравится {self.recipe}'
 
 
 class Cart(models.Model):  # here to avoid circular import
@@ -209,9 +209,6 @@ class Cart(models.Model):  # here to avoid circular import
         auto_now_add=True,
     )
 
-    def __str__(self):
-        return f'{self.user} покупает {self.recipe}'
-
     class Meta:
         verbose_name = 'Покупка'
         verbose_name_plural = 'Покупки'
@@ -220,3 +217,6 @@ class Cart(models.Model):  # here to avoid circular import
                 fields=['user', 'recipe'], name='unique_cart'
             )
         ]
+
+    def __str__(self):
+        return f'{self.user} покупает {self.recipe}'
