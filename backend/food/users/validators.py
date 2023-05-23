@@ -13,6 +13,7 @@ def validate_username(value):
 
 
 def check_user(id, User):
+    # Тут идёт проверка id перед подпиской или отпиской от пользователя
     if not User.objects.filter(id=id).exists():
         error = serializers.ValidationError(
             {"detail": f"Не существует пользователя с таким id: {id}"}

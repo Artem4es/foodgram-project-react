@@ -10,9 +10,9 @@ from rest_framework import (
     viewsets,
 )
 
-from api.filters import RecipeFilter
-from api.functions import create_pdf, get_ingredients
-from api.permissions import AuthorAdminPermission
+from api.v1.filters import RecipeFilter
+from api.v1.services import create_pdf, get_ingredients
+from api.v1.permissions import AuthorAdminPermission
 from recipe.serializers import (
     IngredientSerializer,
     RecipeSerializer,

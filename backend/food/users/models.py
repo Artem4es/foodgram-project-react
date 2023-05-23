@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from .validators import validate_username
+from users.validators import validate_username
 
 
 class User(AbstractUser):
@@ -81,9 +81,6 @@ class Follow(models.Model):
         verbose_name='Дата подписки', auto_now_add=True
     )
 
-    def __str__(self):
-        return f'{self.user} подписан на {self.author}'
-
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
@@ -92,3 +89,6 @@ class Follow(models.Model):
                 fields=['user', 'author'], name='unique_subscription'
             )
         ]
+
+    def __str__(self):
+        return f'{self.user} подписан на {self.author}'

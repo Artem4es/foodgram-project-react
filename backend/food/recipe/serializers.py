@@ -13,12 +13,13 @@ from recipe.models import (
     Tag,
 )
 from recipe.validators import (
+    is_unique,
     validate_ingredients,
     validate_ingredient_id,
     validate_recipe_name,
     validate_tags,
 )
-from users.models import Follow, User
+from users.serializers import AuthorSerializer
 
 
 class Base64ImageField(serializers.ImageField):
@@ -76,32 +77,6 @@ class TagSerializer(serializers.ModelSerializer):
             data = tag
 
         return data
-
-
-class AuthorSerializer(
-    serializers.ModelSerializer
-):  # here to avoid circular import error
-    is_subscribed = serializers.SerializerMethodField()
-
-    def get_is_subscribed(self, obj):
-        """Существует ли подписка на этого автора"""
-        cur_user = self.context.get('request').user
-        if cur_user.is_anonymous:
-            return False
-        if Follow.objects.filter(user=cur_user, author=obj).exists():
-            return True
-        return False
-
-    class Meta:
-        model = User
-        fields = (
-            'email',
-            'id',
-            'username',
-            'first_name',
-            'last_name',
-            'is_subscribed',
-        )
 
 
 class RecipeSubscribeSerializer(serializers.ModelSerializer):
@@ -173,6 +148,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         return super().to_representation(instance)
 
     def validate_name(self, value):
+        if self.context.get('request').method == 'PATCH':
+            return value
         cur_user = self.context.get('request').user
         return validate_recipe_name(value, cur_user, Recipe)
 
@@ -187,20 +164,29 @@ class RecipeSerializer(serializers.ModelSerializer):
         validated_data['author'] = author
         validated_data.pop('tags')
         validated_data.pop('ingredients')
-        recipe = Recipe.objects.create(**validated_data)
-
+        recipe = Recipe(**validated_data)
+        recipetag_list = []
+        tag_set = set()
         for tag in tags:
             tag_id = tag.get('id')
+            is_unique(tag_id, tag_set, 'tags')
             tag = Tag.objects.get(id=tag_id)
-            RecipeTag.objects.get_or_create(recipe=recipe, tag=tag)
-
+            recipetag_list.append(RecipeTag(recipe=recipe, tag=tag))
+        recipeingredient_list = []
+        ing_set = set()
         for ingredient in ingredients:
             ing_id = ingredient.get('id')
+            is_unique(ing_id, ing_set, 'ingredients')
             ing_inst = Ingredient.objects.get(id=ing_id)
             amount = ingredient.get('amount')
-            RecipeIngredient.objects.get_or_create(
-                recipe=recipe, ingredient=ing_inst, amount=amount
+            recipeingredient_list.append(
+                RecipeIngredient(
+                    recipe=recipe, ingredient=ing_inst, amount=amount
+                )
             )
+        recipe.save()
+        RecipeTag.objects.bulk_create(recipetag_list)
+        RecipeIngredient.objects.bulk_create(recipeingredient_list)
         return recipe
 
     def update(self, instance, validated_data):
@@ -212,19 +198,27 @@ class RecipeSerializer(serializers.ModelSerializer):
         instance.cooking_time = validated_data.get(
             'cooking_time', instance.cooking_time
         )
-        instance.save()
-
         RecipeTag.objects.filter(recipe_id=instance.id).delete()
+        recipetag_list = []
+        tag_set = set()
         for tag in tags:
             tag = Tag.objects.filter(**tag)[0]
-            RecipeTag.objects.create(recipe=instance, tag=tag)
+            is_unique(tag.id, tag_set, 'tags')
+            recipetag_list.append(RecipeTag(recipe=instance, tag=tag))
         RecipeIngredient.objects.filter(recipe_id=instance.id).delete()
+        recipeingredient_list = []
+        ing_set = set()
         for ingredient in ingredients:
             ing_id = ingredient.get('id')
+            is_unique(ing_id, ing_set, 'ingredients')
             ing_inst = Ingredient.objects.get(id=ing_id)
             amount = ingredient.get('amount')
-            RecipeIngredient.objects.get_or_create(
-                recipe=instance, ingredient=ing_inst, amount=amount
+            recipeingredient_list.append(
+                RecipeIngredient(
+                    recipe=instance, ingredient=ing_inst, amount=amount
+                )
             )
-
+        instance.save()
+        RecipeTag.objects.bulk_create(recipetag_list)
+        RecipeIngredient.objects.bulk_create(recipeingredient_list)
         return instance
