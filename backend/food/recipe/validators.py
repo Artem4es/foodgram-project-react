@@ -48,7 +48,15 @@ def validate_tags(value, Tag):
     return cur_tag
 
 
-def validate_recipe_name(name, cur_user, Recipe):  # , context, Recipe):
+def is_unique(el_id, el_set, field):
+    if el_id in el_set:
+        raise serializers.ValidationError(
+            f'Элементы в поле "{field}" не должны повторяться'
+        )
+    el_set.add(el_id)
+
+
+def validate_recipe_name(name, cur_user, Recipe):
     if Recipe.objects.filter(author=cur_user, name=name).exists():
         raise serializers.ValidationError(
             'У вас уже есть рецепт с таким названием!'

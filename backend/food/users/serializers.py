@@ -3,9 +3,33 @@ from djoser.serializers import (
 )
 from rest_framework import serializers
 
+from recipe.models import Recipe
 from recipe.validators import validate_recipes_limit
-from recipe.serializers import AuthorSerializer, RecipeSubscribeSerializer
-from .models import User
+from users.models import User, Follow
+
+
+class AuthorSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
+    def get_is_subscribed(self, obj):
+        """Существует ли подписка на этого автора"""
+        cur_user = self.context.get('request').user
+        if cur_user.is_anonymous:
+            return False
+        if Follow.objects.filter(user=cur_user, author=obj).exists():
+            return True
+        return False
+
+    class Meta:
+        model = User
+        fields = (
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+        )
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -25,6 +49,13 @@ class CustomUserSerializer(AuthorSerializer):
     """
     Responsible for "users" basename. Basically it's DRF UserSerializer
     """
+
+
+class RecipeSubscribeSerializer(serializers.ModelSerializer):
+    # Если перенести в рецепты будет ошибка сircular import
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class SubscribeUserSerializer(AuthorSerializer):

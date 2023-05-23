@@ -5,6 +5,7 @@ from rest_framework.permissions import (
 
 
 class AuthorAdminPermission(IsAuthenticatedOrReadOnly):
+    # has_permission определён в IsAuthenticatedOrReadOnly
     """
     Allows insecure methods only for instance owner or admin.
     Only secure requests otherwise
