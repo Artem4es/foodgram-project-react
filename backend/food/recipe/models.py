@@ -23,6 +23,7 @@ class Product(models.Model):
     name = models.CharField(verbose_name='Продукт', unique=True, max_length=50)
 
     class Meta:
+        ordering = ('name',)
         verbose_name = 'Продукт'
         verbose_name_plural = 'Продукты'
 
@@ -45,6 +46,7 @@ class Ingredient(models.Model):
     )
 
     class Meta:
+        ordering = ('product__name',)
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
 
@@ -73,6 +75,7 @@ class Tag(models.Model):
         super(Tag, self).save(*args, **kwargs)
 
     class Meta:
+        ordering = ('name',)
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
 
@@ -136,6 +139,7 @@ class RecipeTag(models.Model):
     )
 
     class Meta:
+        ordering = ('recipe__name',)
         verbose_name = 'Теги рецептов'
         verbose_name_plural = 'Теги рецептов'
 
@@ -161,6 +165,7 @@ class RecipeIngredient(models.Model):
     )
 
     class Meta:
+        ordering = ('recipe__name',)
         verbose_name = 'Ингредиенты рецептов'
         verbose_name_plural = 'Ингредиенты рецептов'
 
@@ -183,6 +188,7 @@ class Favorites(models.Model):  # here to avoid circular import
     )
 
     class Meta:
+        ordering = ('user', 'pub_date')
         verbose_name = 'Избранные рецепты'
         verbose_name_plural = 'Избранные рецепты'
         constraints = [
@@ -210,6 +216,7 @@ class Cart(models.Model):  # here to avoid circular import
     )
 
     class Meta:
+        ordering = ('user', 'pub_date')
         verbose_name = 'Покупка'
         verbose_name_plural = 'Покупки'
         constraints = [

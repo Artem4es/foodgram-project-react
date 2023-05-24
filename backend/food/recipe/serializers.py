@@ -33,7 +33,7 @@ class Base64ImageField(serializers.ImageField):
 
 class IngredientSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=True)
-    name = serializers.SlugRelatedField(slug_field='name', read_only=True)
+    name = serializers.StringRelatedField(source='product', read_only=True)
     measurement_unit = serializers.SlugRelatedField(
         slug_field='name', read_only=True
     )
