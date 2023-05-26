@@ -30,6 +30,9 @@ class Base64ImageField(serializers.ImageField):
             data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
         return data
 
+    def to_representation(self, value):
+        return super().to_representation(value)
+
 
 class IngredientSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=True)

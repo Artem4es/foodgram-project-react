@@ -8,7 +8,10 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    default='django-insecure-hqawgpzfxa+^n$bgi%dyvf^2ao-vguv8$*swo2gkje*f2)4bzv',  ############!!!!
+)
 
 
 DEBUG = True
@@ -105,10 +108,11 @@ USE_L10N = True
 
 USE_TZ = True
 
+# STATICFILES_DIRS = [os.path.join(BASE_DIR, "static1")]
 
-STATIC_URL = '/static/'
+STATIC_URL = '/backend/static/'
 
-MEDIA_URL = '/media/'
+MEDIA_URL = '/backend/media/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

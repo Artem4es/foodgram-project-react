@@ -32,10 +32,10 @@ def create_pdf(ingredients):
     logo_path = os.path.join(MEDIA_ROOT, 'logo.jpg')
     p = canvas.Canvas(filename=file_path)
     p.drawImage(image=logo_path, x=195, y=500)
-    pdfmetrics.registerFont(ttfonts.TTFont('Verdana', 'Verdana.ttf'))
-    p.setFont("Verdana", 14)
+    pdfmetrics.registerFont(ttfonts.TTFont('Dejavu', 'DejaVuSans.ttf'))
+    p.setFont('Dejavu', 14)
     p.drawCentredString(300, 478, 'Что нужно купить: ')
-    p.setFont("Verdana", 12)
+    p.setFont('Dejavu', 12)
     y = 450
     for ingredient, amount in ingredients.items():
         p.drawCentredString(

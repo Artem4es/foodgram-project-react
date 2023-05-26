@@ -70,17 +70,13 @@ class Tag(models.Model):
         unique=True,
     )
 
-    def save(self, *args, **kwargs):
-        self.slug = slugify(self.name, allow_unicode=True)
-        super(Tag, self).save(*args, **kwargs)
-
     class Meta:
         ordering = ('name',)
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
 
     def __str__(self):
-        return self.name
+        return self.slug
 
 
 class Recipe(models.Model):
