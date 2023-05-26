@@ -1,7 +1,6 @@
-#FROM node:13.12.0-alpine as build
-FROM node:19.5.0-alpine as build
+FROM node:13.12.0-alpine as build
 WORKDIR /app
-COPY package*.json ./
+COPY package*.json ./app
 RUN npm install
 COPY . ./
 RUN npm run build
