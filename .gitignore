@@ -137,6 +137,9 @@ dmypy.json
 
 # static and migration files
 static/
-media/
+images/
+pdf/
 migrations/
+
+
 todo
