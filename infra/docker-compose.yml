@@ -19,8 +19,6 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
-    # ports:
-    #   - "7000:8000"
     restart: always
     volumes:
       - static_value:/app/static/

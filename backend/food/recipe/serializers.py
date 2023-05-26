@@ -30,9 +30,6 @@ class Base64ImageField(serializers.ImageField):
             data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
         return data
 
-    def to_representation(self, value):
-        return super().to_representation(value)
-
 
 class IngredientSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=True)
@@ -86,6 +83,9 @@ class RecipeSubscribeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
+
+    def to_representation(self, instance):
+        return super().to_representation(instance)
 
 
 class RecipeSerializer(serializers.ModelSerializer):

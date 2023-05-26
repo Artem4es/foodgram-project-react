@@ -8,13 +8,10 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-SECRET_KEY = os.getenv(
-    'SECRET_KEY',
-    default='django-insecure-hqawgpzfxa+^n$bgi%dyvf^2ao-vguv8$*swo2gkje*f2)4bzv',  ############!!!!
-)
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
