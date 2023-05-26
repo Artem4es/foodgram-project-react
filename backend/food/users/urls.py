@@ -19,4 +19,7 @@ users_urlpatterns = [
         CustomTokenCreateView.as_view(),
         name='token_create',
     ),
+    path(
+        'auth/', include('djoser.urls.authtoken')
+    ),  # strictly after name='token_create'
 ]

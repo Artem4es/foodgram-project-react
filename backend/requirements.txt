@@ -23,7 +23,7 @@ psycopg2-binary==2.8.6
 pycairo==1.23.0
 pycparser==2.21
 PyJWT==2.6.0
-python-dotenv==1.0.0
+python-dotenv
 python3-openid==3.2.0
 pytz==2023.3
 reportlab==4.0.0
@@ -36,3 +36,4 @@ social-auth-core==4.4.2
 sqlparse==0.4.4
 uritemplate==4.1.1
 urllib3==2.0.2
+gunicorn==20.0.4

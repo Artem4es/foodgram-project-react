@@ -8,7 +8,6 @@ app_name = 'v1'
 
 urlpatterns = [
     path(r'', include(users_urlpatterns)),
-    path('auth/', include('djoser.urls.authtoken')),  # has to be after users!
     path(r'', include(recipe_urlpatterns)),
     path(r'', include('djoser.urls')),
 ]
