@@ -135,8 +135,11 @@ dmypy.json
 # code
 .vscode/
 
-# static media
+# static and migration files
 static/
-media/
+images/
+pdf/
+migrations/
+
 
 todo
