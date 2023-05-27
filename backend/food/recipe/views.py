@@ -1,7 +1,6 @@
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
-from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import (
@@ -10,7 +9,7 @@ from rest_framework import (
     viewsets,
 )
 
-from api.v1.filters import RecipeFilter
+from api.v1.filters import RecipeFilter, CustomSearchFilter
 from api.v1.services import create_pdf, get_ingredients
 from api.v1.permissions import AuthorAdminPermission
 from recipe.serializers import (
@@ -34,8 +33,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.select_related('product', 'measurement_unit')
     serializer_class = IngredientSerializer
     pagination_class = None
-    filter_backends = (SearchFilter,)
-    search_fields = ('^name__name',)
+    filter_backends = (CustomSearchFilter,)
+    search_fields = ('^product__name',)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):

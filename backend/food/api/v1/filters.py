@@ -3,7 +3,9 @@ from django_filters import (
     FilterSet,
     MultipleChoiceFilter,
 )
+
 from rest_framework import serializers
+from rest_framework.filters import SearchFilter
 
 from recipe.models import Recipe, Tag
 
@@ -55,3 +57,7 @@ class RecipeFilter(FilterSet):
     class Meta:
         model = Recipe
         fields = ('tags', 'author', 'is_favorited', 'is_in_shopping_cart')
+
+
+class CustomSearchFilter(SearchFilter):
+    search_param = 'name'
