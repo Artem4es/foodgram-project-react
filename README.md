@@ -73,4 +73,4 @@ python3 manage.py collectstatic
 После запуска проекта (python3 manage.py runserver) документация со списком эндпоинтов доступна по ссылке:
 http://127.0.0.1:8000/redoc
 
-<!-- ![example workflow](https://github.com/artem4es/yamdb_final/actions/workflows/yamdb_workflow.yml/badge.svg) -->
+![example workflow](https://github.com/artem4es/foodgram-project-react/actions/workflows/foodgram_actions.yml/badge.svg)
