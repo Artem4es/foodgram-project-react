@@ -51,9 +51,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
     permission_classes = (AuthorAdminPermission,)
 
-    def update(self, request, partial=False, *args, **kwargs):
-        return super().update(request, *args, **kwargs)
-
     @action(
         detail=True,
         url_path=r'favorite',

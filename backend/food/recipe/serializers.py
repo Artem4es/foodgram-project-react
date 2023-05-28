@@ -67,14 +67,14 @@ class TagSerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, data):
         if not isinstance(data, dict):
-            cur_tag = validate_tags(data, Tag)
             tag = {}
+            cur_tag = validate_tags(data, Tag)
             tag['id'] = cur_tag.id
             tag['name'] = cur_tag.name
             tag['color'] = cur_tag.color
             tag['slug'] = cur_tag.slug
-
-        return tag
+            return tag
+        return data
 
 
 class RecipeSubscribeSerializer(serializers.ModelSerializer):
