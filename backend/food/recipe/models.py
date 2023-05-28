@@ -1,6 +1,5 @@
 from django.core import validators
 from django.db import models
-from django.utils.text import slugify
 
 from recipe.validators import validate_time
 from users.models import User

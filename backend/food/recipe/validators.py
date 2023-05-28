@@ -28,7 +28,7 @@ def validate_recipes_limit(value):
     return int(value)
 
 
-def validate_tags(value, Tag):
+def validate_tags(value, tag):
     if value == 'empty':
         raise serializers.ValidationError(
             {'tags': 'Содержимое поля "tags" не должно быть пустым!'}
@@ -40,8 +40,8 @@ def validate_tags(value, Tag):
             }
         )
     try:
-        cur_tag = Tag.objects.get(id=value)
-    except Tag.DoesNotExist:
+        cur_tag = tag.objects.get(id=value)
+    except tag.DoesNotExist:
         raise serializers.ValidationError(
             {'tags': f'Тег с id {value} не существует'}
         )
@@ -56,8 +56,8 @@ def is_unique(el_id, el_set, field):
     el_set.add(el_id)
 
 
-def validate_recipe_name(name, cur_user, Recipe):
-    if Recipe.objects.filter(author=cur_user, name=name).exists():
+def validate_recipe_name(name, cur_user, recipe):
+    if recipe.objects.filter(author=cur_user, name=name).exists():
         raise serializers.ValidationError(
             'У вас уже есть рецепт с таким названием!'
         )
@@ -73,12 +73,12 @@ def validate_ingredients(value):
     return value
 
 
-def check_recipe_id(pk, Recipe):
-    if not Recipe.objects.filter(id=pk).exists():
+def check_recipe_id(pk, recipe):
+    if not recipe.objects.filter(id=pk).exists():
         raise serializers.ValidationError(
             {"errors": f"Не существует рецепта с таким id: {pk}"}
         )
-    return Recipe.objects.get(id=pk)
+    return recipe.objects.get(id=pk)
 
 
 def check_if_owner(recipe, cur_user):
@@ -88,29 +88,29 @@ def check_if_owner(recipe, cur_user):
         )
 
 
-def check_if_not_favorited(cur_user, recipe, Favorites):
-    if not Favorites.objects.filter(user=cur_user, recipe=recipe).exists():
+def check_if_not_favorited(cur_user, recipe, favorites):
+    if not favorites.objects.filter(user=cur_user, recipe=recipe).exists():
         raise serializers.ValidationError(
             {"errors": "Вы не подписаны на этот рецепт"}
         )
 
 
-def check_if_subscribed(cur_user, recipe, Favorites):
-    if Favorites.objects.filter(user=cur_user, recipe=recipe).exists():
+def check_if_subscribed(cur_user, recipe, favorites):
+    if favorites.objects.filter(user=cur_user, recipe=recipe).exists():
         raise serializers.ValidationError(
             {"errors": "Вы уже подписаны на этот рецепт"}
         )
 
 
-def is_in_cart(cur_user, recipe, Cart):
-    if Cart.objects.filter(user=cur_user, recipe=recipe).exists():
+def is_in_cart(cur_user, recipe, cart):
+    if cart.objects.filter(user=cur_user, recipe=recipe).exists():
         raise serializers.ValidationError(
             {"errors": "У вас в корзине уже есть этот рецепт"}
         )
 
 
-def is_not_in_cart(cur_user, recipe, Cart):
-    if not Cart.objects.filter(user=cur_user, recipe=recipe).exists():
+def is_not_in_cart(cur_user, recipe, cart):
+    if not cart.objects.filter(user=cur_user, recipe=recipe).exists():
         raise serializers.ValidationError(
             {"errors": "У вас нет этого рецепта в корзине"}
         )

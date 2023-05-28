@@ -1,9 +1,4 @@
-from django_filters import (
-    CharFilter,
-    FilterSet,
-    MultipleChoiceFilter,
-)
-
+from django_filters import CharFilter, FilterSet, MultipleChoiceFilter
 from rest_framework import serializers
 from rest_framework.filters import SearchFilter
 

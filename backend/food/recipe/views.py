@@ -67,12 +67,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
             Favorites.objects.get(user=cur_user, recipe=recipe).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        elif request.method == 'POST':
-            check_if_owner(recipe, cur_user)
-            check_if_subscribed(cur_user, recipe, Favorites)
-            Favorites.objects.get_or_create(user=cur_user, recipe=recipe)
-            serializer = RecipeSubscribeSerializer(instance=recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        check_if_owner(recipe, cur_user)
+        check_if_subscribed(cur_user, recipe, Favorites)
+        Favorites.objects.get_or_create(user=cur_user, recipe=recipe)
+        serializer = RecipeSubscribeSerializer(instance=recipe)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(
         methods=('get',),
@@ -102,7 +101,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             serializer = RecipeSubscribeSerializer(instance=recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        elif request.method == 'DELETE':
-            is_not_in_cart(cur_user, recipe, Cart)
-            Cart.objects.get(user=cur_user, recipe=recipe).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        is_not_in_cart(cur_user, recipe, Cart)
+        Cart.objects.get(user=cur_user, recipe=recipe).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

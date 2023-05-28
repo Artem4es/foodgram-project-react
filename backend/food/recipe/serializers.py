@@ -27,8 +27,7 @@ class Base64ImageField(serializers.ImageField):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
             ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-        return data
+        return ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -74,9 +73,8 @@ class TagSerializer(serializers.ModelSerializer):
             tag['name'] = cur_tag.name
             tag['color'] = cur_tag.color
             tag['slug'] = cur_tag.slug
-            data = tag
 
-        return data
+        return tag
 
 
 class RecipeSubscribeSerializer(serializers.ModelSerializer):

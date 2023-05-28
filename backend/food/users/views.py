@@ -67,7 +67,7 @@ class CustomUserViewSet(UserViewSet):
                 instance=author, context={'request': request}
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif request.method == 'DELETE':
-            check_if_not_subscribed(cur_user, author, Follow)
-            Follow.objects.filter(user=cur_user, author=author).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        check_if_not_subscribed(cur_user, author, Follow)
+        Follow.objects.filter(user=cur_user, author=author).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -3,13 +3,13 @@ from django.contrib import admin
 from recipe.models import (
     Cart,
     Favorites,
-    Unit,
-    Product,
     Ingredient,
+    Product,
     Recipe,
     RecipeIngredient,
     RecipeTag,
     Tag,
+    Unit,
 )
 
 
