@@ -67,6 +67,6 @@ python3 manage.py collectstatic
 
 ### Документация проекта: :blue_book:
 После запуска проекта (python3 manage.py runserver) документация со списком эндпоинтов доступна по ссылке:
-http://127.0.0.1:8000/redoc
+http://localhost/api/docs/
 
 ![example workflow](https://github.com/artem4es/foodgram-project-react/actions/workflows/foodgram_actions.yml/badge.svg)
