@@ -8,7 +8,7 @@ from rest_framework import serializers, status
 def validate_username(value):
     if value.lower() == "me":
         raise ValidationError(_(f"Имя {value} использовать нельзя."))
-    if not re.match(r"[\w.@+-]+\Z", value):
+    if not re.match(r"^[\w.@+-]+\Z", value):
         raise ValidationError(_(f"{value} содержит недопустимые символы!"))
 
 
