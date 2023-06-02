@@ -1,3 +1,5 @@
+![example workflow](https://github.com/artem4es/foodgram-project-react/actions/workflows/foodgram_actions.yml/badge.svg)
+
 ### [Что это за Foodgram?](http://ovz8.j66017249.pvl9n.vps.myjino.ru/):smiley_cat: 
 Foodgram - это онлайн-сервис + API (DRF), благодаря которому пользователи могут публиковать рецепты, подписываться на публикации других пользователей, добавлять понравившиеся рецепты в список «Избранное», а перед походом в магазин скачивать сводный список продуктов, необходимых для приготовления одного или нескольких выбранных блюд.
 
@@ -68,5 +70,5 @@ python3 manage.py collectstatic
 ### Документация проекта: :blue_book:
 После запуска проекта (python3 manage.py runserver) документация со списком эндпоинтов доступна по ссылке:
 http://localhost/api/docs/
-
-![example workflow](https://github.com/artem4es/foodgram-project-react/actions/workflows/foodgram_actions.yml/badge.svg)
+или тут
+http://ovz8.j66017249.pvl9n.vps.myjino.ru/api/docs/
